@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Battery Monitor</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase (Compat SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-bar">
+    <div class="project-name">Battery Monitoring System</div> 
+    <nav class="nav-bar">
+      <a href="#home">Home</a>
+      <a href="#voltage">Voltage</a>
+      <a href="#temperature">Temperature</a>
+      <a href="#about">About</a>
+      <input type="text" placeholder="Search battery info..." class="search-bar" />
+    </nav>
+  </header>
+
+  <!-- Home -->
+  <section id="home" class="page-section">
+    <h1 class="main-title">Battery Performance</h1>
+    <div class="main-display">
+      <div class="graph-container">
+        <canvas id="batteryPerformanceChart"></canvas>
+      </div>
+      <div class="info-container">
+        <div class="info-card"><p><strong>Temperature:</strong> <span id="temp">--</span> °C</p></div>
+        <div class="info-card"><p><strong>Battery %:</strong> <span id="battery">--</span>%</p></div>
+        <div class="info-card"><p><strong>Date:</strong> <span id="currentDate">--</span></p></div>
+        <div class="info-card"><p><strong>Time:</strong> <span id="currentTime">--</span></p></div>
+        <div class="graph-view-dropdown">
+          <label for="graph-view-select">Select View:</label>
+          <select id="graph-view-select" onchange="changeGraphView(this.value)">
+            <option value="day">Day</option>
+            <option value="hour">Hour</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+          </select>
+        </div>
+        <div id="error-symbol" class="error-message">Battery Overheated!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Voltage -->
+  <section id="voltage" class="page-section">
+    <h2>Voltage Overview</h2>
+    <p>Monitor real-time voltage levels and variations.</p>
+    <div class="voltage-box">
+      <div class="voltage-graph-container">
+        <canvas id="voltageGraph"></canvas>
+      </div>
+      <div class="voltage-info">
+        <h3>Voltage Details</h3>
+        <p><strong>Current Voltage:</strong> <span id="voltage-value">--</span> V</p>
+        <div class="dropdown-container">
+          <label for="voltage-time-view">View By:</label>
+          <select id="voltage-time-view" onchange="changeVoltageGraphView(this.value)">
+            <option value="hour">Hour</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Temperature -->
+  <section id="temperature" class="page-section">
+    <h2>Temperature Overview</h2>
+    <p>Analyze temperature impact on battery performance.</p>
+    <div class="dropdown-container">
+      <label for="temp-time-view">View By:</label>
+      <select id="temp-time-view" onchange="changeTempGraphView(this.value)">
+        <option value="hour">Hour</option>
+        <option value="month">Month</option>
+        <option value="year">Year</option>
+      </select>
+    </div>
+    <div class="temperature-graph">
+      <canvas id="temperatureGraph"></canvas>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="page-section">
+    <h2>About</h2>
+    <p>This system helps monitor battery health, voltage, and temperature for performance and safety.</p>
+  </section>
+
+  <!-- Your main script (MUST come last) -->
+  <script src="script.js"></script>
+</body>
+</html>

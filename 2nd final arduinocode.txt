@@ -1,0 +1,184 @@
+#include <SPI.h>
+#include <SD.h>
+#include <Wire.h>
+#include "RTClib.h"
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <LiquidCrystal_I2C.h>  // LCD library
+
+// ================= LCD SETUP =================
+#define LCD_ADDRESS 0x27
+#define LCD_COLUMNS 16
+#define LCD_ROWS    2
+LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
+
+// ================ DS18B20 Setup ==============
+#define ONE_WIRE_BUS 3
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature ds18b20(&oneWire);
+
+// ================ RTC ========================
+RTC_DS3231 rtc;
+char timestamp[20];
+
+// ================ SD =========================
+const int chipSelect = 10;
+bool sdReady = false;
+
+// ================ Sensors ====================
+const int voltageSensorPin = A0;
+const int currentSensorPin = A1;
+
+// ================ Motor ======================
+const int motorEnablePin = 6;
+const int motorPin1 = 7;
+const int motorPin2 = 8;
+
+// ================ Calibration ================
+const float refVoltage = 5.0;
+const float voltageScaleFactor = 5.0;
+const float sensitivity = 0.066;
+float zeroCurrentVoltage = 2.5;
+
+unsigned long lastDisplayUpdate = 0;
+unsigned long displayInterval = 1000; // 1 second
+
+void setup() {
+  Serial.begin(9600);
+
+  // LCD
+  Wire.begin(); 
+  lcd.begin(LCD_COLUMNS, LCD_ROWS);
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("System Init...");
+
+  // Motor
+  pinMode(motorEnablePin, OUTPUT);
+  pinMode(motorPin1, OUTPUT);
+  pinMode(motorPin2, OUTPUT);
+  motorStop();
+  digitalWrite(motorEnablePin, LOW);
+
+  // DS18B20
+  ds18b20.begin();
+
+  // RTC
+  if (!rtc.begin()) {
+    Serial.println("RTC not found!");
+    while (1);
+  }
+  if (rtc.lostPower()) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
+  // SD
+  if (SD.begin(chipSelect)) {
+    Serial.println("SD card initialized.");
+    sdReady = true;
+    File dataFile = SD.open("log.csv", FILE_WRITE);
+    if (dataFile) {
+      dataFile.println("Date,Time,Voltage(V),Current(A),Temperature(C),Battery(%)");
+      dataFile.close();
+    }
+  } else {
+    Serial.println("SD card init failed!");
+  }
+
+  // Zero current calibration
+  long sum = 0;
+  for (int i = 0; i < 100; i++) {
+    sum += analogRead(currentSensorPin);
+    delay(5);
+  }
+  zeroCurrentVoltage = (sum / 100.0 / 1023.0) * refVoltage;
+
+  delay(1000);
+  lcd.clear();
+}
+
+void loop() {
+  // Check Bluetooth commands quickly
+  if (Serial.available()) {
+    char cmd = tolower(Serial.read());
+    if (cmd == 'f') motorForward();
+    else if (cmd == 'b') motorBackward();
+    else if (cmd == 'w') motorStop();
+    else if (cmd == 'q') { motorStop(); while (true); }
+  }
+
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastDisplayUpdate >= displayInterval) {
+    lastDisplayUpdate = currentMillis;
+
+    float voltage = analogRead(voltageSensorPin) * refVoltage / 1023.0 * voltageScaleFactor;
+    float sensorVoltage = analogRead(currentSensorPin) * refVoltage / 1023.0;
+    float current = (sensorVoltage - zeroCurrentVoltage) / sensitivity;
+
+    ds18b20.requestTemperatures();
+    float temp = ds18b20.getTempCByIndex(0);
+    if (temp == DEVICE_DISCONNECTED_C) temp = 0.0;
+
+    int batteryPercent = constrain((voltage / 20.0) * 100, 0, 100);
+
+    DateTime now = rtc.now();
+    sprintf(timestamp, "%02d/%02d/%04d,%02d:%02d:%02d",
+            now.day(), now.month(), now.year(),
+            now.hour(), now.minute(), now.second());
+
+    Serial.print("Time: ");
+    Serial.print(timestamp);
+    Serial.print(" | V: ");
+    Serial.print(voltage, 2);
+    Serial.print(" V | C: ");
+    Serial.print(current, 2);
+    Serial.print(" A | T: ");
+    Serial.print(temp, 1);
+    Serial.print(" °C | BC: ");
+    Serial.print(batteryPercent);
+    Serial.println(" %");
+
+    lcd.setCursor(0, 0);
+    lcd.print("V:"); lcd.print(voltage, 1);
+    lcd.print(" C:"); lcd.print(current, 1);
+
+    lcd.setCursor(0, 1);
+    lcd.print("T:"); lcd.print(temp, 1);
+    lcd.print(" BC:"); lcd.print(batteryPercent);
+    lcd.print("% ");
+
+    if (sdReady) {
+      File dataFile = SD.open("log.csv", FILE_WRITE);
+      if (dataFile) {
+        dataFile.print(timestamp);
+        dataFile.print(",");
+        dataFile.print(voltage, 2);
+        dataFile.print(",");
+        dataFile.print(current, 2);
+        dataFile.print(",");
+        dataFile.print(temp, 1);
+        dataFile.print(",");
+        dataFile.println(batteryPercent);
+        dataFile.close();
+      }
+    }
+  }
+}
+
+// Motor functions
+void motorForward() {
+  digitalWrite(motorEnablePin, HIGH);
+  digitalWrite(motorPin1, HIGH);
+  digitalWrite(motorPin2, LOW);
+}
+void motorBackward() {
+  digitalWrite(motorEnablePin, HIGH);
+  digitalWrite(motorPin1, LOW);
+  digitalWrite(motorPin2, HIGH);
+}
+void motorStop() {
+  digitalWrite(motorEnablePin, LOW);
+  digitalWrite(motorPin1, LOW);
+  digitalWrite(motorPin2, LOW);
+}
