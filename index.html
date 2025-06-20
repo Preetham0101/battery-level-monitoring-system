@@ -27,7 +27,7 @@
     </nav>
   </header>
 
-  <!-- Home -->
+  <!-- Home Section -->
   <section id="home" class="page-section">
     <h1 class="main-title">Battery Performance</h1>
     <div class="main-display">
@@ -35,28 +35,24 @@
         <canvas id="batteryPerformanceChart"></canvas>
       </div>
       <div class="info-container">
-        <div class="info-card"><p><strong>Temperature:</strong> <span id="temp">--</span> °C</p></div>
-        <div class="info-card"><p><strong>Battery %:</strong> <span id="battery">--</span>%</p></div>
-        <div class="info-card"><p><strong>Date:</strong> <span id="currentDate">--</span></p></div>
-        <div class="info-card"><p><strong>Time:</strong> <span id="currentTime">--</span></p></div>
-        <div class="graph-view-dropdown">
-          <label for="graph-view-select">Select View:</label>
-          <select id="graph-view-select" onchange="changeGraphView(this.value)">
-            <option value="day">Day</option>
-            <option value="hour">Hour</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
-          </select>
-        </div>
-        <div id="error-symbol" class="error-message">Battery Overheated!</div>
+        <p><strong>Temperature:</strong> <span id="temp">--</span> °C</p>
+        <p><strong>Battery %:</strong> <span id="battery">--</span>%</p>
+        <p><strong>Date:</strong> <span id="currentDate">--</span></p>
+        <p><strong>Time:</strong> <span id="currentTime">--</span></p>
+        <label for="graph-view-select">Select View:</label>
+        <select id="graph-view-select" onchange="changeGraphView(this.value)">
+          <option value="hour">Hour</option>
+          <option value="day" selected>Day</option>
+          <option value="month">Month</option>
+          <option value="year">Year</option>
+        </select>
       </div>
     </div>
   </section>
 
-  <!-- Voltage -->
+  <!-- Voltage Section -->
   <section id="voltage" class="page-section">
     <h2>Voltage Overview</h2>
-    <p>Monitor real-time voltage levels and variations.</p>
     <div class="voltage-box">
       <div class="voltage-graph-container">
         <canvas id="voltageGraph"></canvas>
@@ -64,42 +60,36 @@
       <div class="voltage-info">
         <h3>Voltage Details</h3>
         <p><strong>Current Voltage:</strong> <span id="voltage-value">--</span> V</p>
-        <div class="dropdown-container">
-          <label for="voltage-time-view">View By:</label>
-          <select id="voltage-time-view" onchange="changeVoltageGraphView(this.value)">
-            <option value="hour">Hour</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
-          </select>
-        </div>
+        <label for="voltage-time-view">View By:</label>
+        <select id="voltage-time-view" onchange="changeVoltageGraphView(this.value)">
+          <option value="hour">Hour</option>
+          <option value="day" selected>Day</option>
+          <option value="month">Month</option>
+          <option value="year">Year</option>
+        </select>
       </div>
     </div>
   </section>
 
-  <!-- Temperature -->
+  <!-- Temperature Section -->
   <section id="temperature" class="page-section">
     <h2>Temperature Overview</h2>
-    <p>Analyze temperature impact on battery performance.</p>
-    <div class="dropdown-container">
-      <label for="temp-time-view">View By:</label>
-      <select id="temp-time-view" onchange="changeTempGraphView(this.value)">
-        <option value="hour">Hour</option>
-        <option value="month">Month</option>
-        <option value="year">Year</option>
-      </select>
-    </div>
-    <div class="temperature-graph">
-      <canvas id="temperatureGraph"></canvas>
-    </div>
+    <canvas id="temperatureGraph"></canvas>
+    <label for="temp-time-view">View By:</label>
+    <select id="temp-time-view" onchange="changeTempGraphView(this.value)">
+      <option value="hour">Hour</option>
+      <option value="day" selected>Day</option>
+      <option value="month">Month</option>
+      <option value="year">Year</option>
+    </select>
   </section>
 
-  <!-- About -->
+  <!-- About Section -->
   <section id="about" class="page-section">
     <h2>About</h2>
     <p>This system helps monitor battery health, voltage, and temperature for performance and safety.</p>
   </section>
 
-  <!-- Your main script (MUST come last) -->
   <script src="script.js"></script>
 </body>
 </html>
