@@ -1,0 +1,170 @@
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include <time.h>  // For timestamps
+
+// ---------------------------------------------------------------------------
+// --- WiFi credentials ---
+const char* ssid = "Preetham";
+const char* password = "12345789";
+
+// --- Firebase credentials ---
+#define API_KEY "AIzaSyBCwhjguHWNJM0L0GwRfoOS3lwrT53YU3Q"
+#define DATABASE_URL "https://battery-monitoring-syste-46d3c-default-rtdb.firebaseio.com"
+
+// --- Firebase user credentials ---
+#define USER_EMAIL "miniprojectak123@gmail.com"
+#define USER_PASSWORD "akshaykumar123"
+
+// --- Firebase objects ---
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+// --- Arduino Serial (pins 16 = RX, 17 = TX) ---
+HardwareSerial ArduinoSerial(1);
+
+// --- Timing Variables ---
+unsigned long lastUploadTime = 0;
+const unsigned long uploadInterval = 10000; // every 10 seconds
+String latestData = "";
+
+// ---------------------------------------------------------------------------
+// === Time Sync Function ===
+void syncTime() {
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.print("Waiting for time sync");
+  while (time(nullptr) < 100000) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println("\nTime synchronized");
+}
+
+// ---------------------------------------------------------------------------
+// === WiFi Connect Function ===
+void connectWiFi() {
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi");
+  int retry = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(1000);
+    retry++;
+    if (retry > 20) {
+      Serial.println("\nRestarting WiFi connection...");
+      WiFi.disconnect();
+      WiFi.begin(ssid, password);
+      retry = 0;
+    }
+  }
+  Serial.println("\nConnected to WiFi!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+// ---------------------------------------------------------------------------
+// === Firebase Setup ===
+void setupFirebase() {
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  config.cert.data = NULL;
+
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+}
+
+// ---------------------------------------------------------------------------
+// === Arduino String Parsing ===
+void parseAndUploadData(String dataLine) {
+  // Expected formats:
+  // TEMP:28.5,HUM:65.2
+  // VOLT:12.45
+  // CURR:1.25
+  // MOTOR:FORWARD
+  // etc.
+
+  FirebaseJson json;
+  dataLine.trim();
+
+  // Parse key-value pairs separated by commas
+  int start = 0;
+  while (true) {
+    int commaIndex = dataLine.indexOf(',', start);
+    String part = (commaIndex == -1) ? dataLine.substring(start) : dataLine.substring(start, commaIndex);
+    int colonIndex = part.indexOf(':');
+    if (colonIndex > 0) {
+      String key = part.substring(0, colonIndex);
+      String value = part.substring(colonIndex + 1);
+      key.trim();
+      value.trim();
+      json.set(key, value);
+    }
+    if (commaIndex == -1) break;
+    start = commaIndex + 1;
+  }
+
+  // Get current timestamp
+  time_t now = time(nullptr);
+  String timestamp = String(now);
+
+  // Create Firebase paths
+  String pathHist = "/arduino/history/" + timestamp;
+  String pathLive = "/arduino/latest";
+
+  // Upload JSON to Firebase
+  if (Firebase.RTDB.setJSON(&fbdo, pathHist, &json)) {
+    Serial.println("✅ Data saved to history: " + pathHist);
+  } else {
+    Serial.print("❌ Failed to save to history: ");
+    Serial.println(fbdo.errorReason());
+  }
+
+  // Update latest node
+  if (Firebase.RTDB.setJSON(&fbdo, pathLive, &json)) {
+    Serial.println("📡 Updated latest data.");
+  } else {
+    Serial.print("❌ Failed to update latest: ");
+    Serial.println(fbdo.errorReason());
+  }
+}
+
+// ---------------------------------------------------------------------------
+// === SETUP ===
+void setup() {
+  Serial.begin(115200);
+  ArduinoSerial.begin(9600, SERIAL_8N1, 16, 17);
+
+  connectWiFi();
+  syncTime();
+  setupFirebase();
+
+  Serial.println("🔥 ESP32 Firebase Data Logger Ready!");
+}
+
+// ---------------------------------------------------------------------------
+// === MAIN LOOP ===
+void loop() {
+  // Check WiFi connection
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("⚠️ WiFi lost. Reconnecting...");
+    connectWiFi();
+  }
+
+  // Read data from Arduino
+  if (ArduinoSerial.available()) {
+    latestData = ArduinoSerial.readStringUntil('\n');
+    latestData.trim();
+    if (latestData.length() > 0) {
+      Serial.println("📩 From Arduino: " + latestData);
+    }
+  }
+
+  // Upload every 10 seconds
+  if (millis() - lastUploadTime >= uploadInterval && latestData != "") {
+    lastUploadTime = millis();
+    parseAndUploadData(latestData);
+  }
+}
