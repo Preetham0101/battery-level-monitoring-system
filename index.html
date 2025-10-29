@@ -3,92 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Battery Monitor</title>
+  <title>Battery Monitoring System</title>
   <link rel="stylesheet" href="style.css" />
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Firebase (Compat SDK) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <!-- Chart.js Zoom Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
+  <h1>🔋 Battery Monitoring Dashboard</h1>
 
-  <!-- Header -->
-  <header class="app-bar">
-    <div class="project-name">Battery Monitoring System</div> 
-    <nav class="nav-bar">
-      <a href="#home">Home</a>
-      <a href="#voltage">Voltage</a>
-      <a href="#temperature">Temperature</a>
-      <a href="#about">About</a>
-      <input type="text" placeholder="Search battery info..." class="search-bar" />
-    </nav>
-  </header>
-
-  <!-- Home Section -->
-  <section id="home" class="page-section">
-    <h1 class="main-title">Battery Performance</h1>
-    <div class="main-display">
-      <div class="graph-container">
-        <canvas id="batteryPerformanceChart"></canvas>
-      </div>
-      <div class="info-container">
-        <p><strong>Temperature:</strong> <span id="temp">--</span> °C</p>
-        <p><strong>Battery %:</strong> <span id="battery">--</span>%</p>
-        <p><strong>Date:</strong> <span id="currentDate">--</span></p>
-        <p><strong>Time:</strong> <span id="currentTime">--</span></p>
-        <label for="graph-view-select">Select View:</label>
-        <select id="graph-view-select" onchange="changeGraphView(this.value)">
-          <option value="hour">Hour</option>
-          <option value="day" selected>Day</option>
-          <option value="month">Month</option>
-          <option value="year">Year</option>
-        </select>
-      </div>
+  <div class="dashboard">
+    <div class="card">
+      <h2>Battery Level</h2>
+      <div class="circular-battery" id="batteryCircle">0%</div>
+      <div class="status" id="batteryStatus">Waiting for data...</div>
     </div>
-  </section>
 
-  <!-- Voltage Section -->
-  <section id="voltage" class="page-section">
-    <h2>Voltage Overview</h2>
-    <div class="voltage-box">
-      <div class="voltage-graph-container">
-        <canvas id="voltageGraph"></canvas>
-      </div>
-      <div class="voltage-info">
-        <h3>Voltage Details</h3>
-        <p><strong>Current Voltage:</strong> <span id="voltage-value">--</span> V</p>
-        <label for="voltage-time-view">View By:</label>
-        <select id="voltage-time-view" onchange="changeVoltageGraphView(this.value)">
-          <option value="hour">Hour</option>
-          <option value="day" selected>Day</option>
-          <option value="month">Month</option>
-          <option value="year">Year</option>
-        </select>
-      </div>
+    <div class="card">
+      <h2>Voltage</h2>
+      <canvas id="voltageChart" class="clickable-chart"></canvas>
     </div>
-  </section>
 
-  <!-- Temperature Section -->
-  <section id="temperature" class="page-section">
-    <h2>Temperature Overview</h2>
-    <canvas id="temperatureGraph"></canvas>
-    <label for="temp-time-view">View By:</label>
-    <select id="temp-time-view" onchange="changeTempGraphView(this.value)">
-      <option value="hour">Hour</option>
-      <option value="day" selected>Day</option>
-      <option value="month">Month</option>
-      <option value="year">Year</option>
-    </select>
-  </section>
+    <div class="card">
+      <h2>Battery %</h2>
+      <canvas id="batteryChart" class="clickable-chart"></canvas>
+    </div>
 
-  <!-- About Section -->
-  <section id="about" class="page-section">
-    <h2>About</h2>
-    <p>This system helps monitor battery health, voltage, and temperature for performance and safety.</p>
-  </section>
+    <div class="card">
+      <h2>Temperature</h2>
+      <canvas id="temperatureChart" class="clickable-chart"></canvas>
+    </div>
+  </div>
+
+  <a href="about.html" class="about-btn" title="About the project">ℹ</a>
+
+  <!-- Chart Zoom Modal -->
+  <div id="chartModal" class="chart-modal" aria-hidden="true">
+    <div class="chart-modal-content" id="draggableModal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3 id="zoomTitle" class="zoom-title"></h3>
+        <div class="header-buttons">
+          <button id="resetZoomBtn" class="reset-btn">Reset Zoom</button>
+          <a id="downloadChart" class="download-btn" href="#" download="chart.png">Download</a>
+          <button id="closeModal" class="close-btn" aria-label="Close">&times;</button>
+        </div>
+      </div>
+      <canvas id="zoomedChart"></canvas>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
