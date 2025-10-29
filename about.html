@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | Battery Monitoring System</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #f9fafc;
+      color: #333;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    .about-container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      border-radius: 15px;
+      padding: 30px 40px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      color: #222;
+      margin-bottom: 20px;
+    }
+
+    section {
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      color: #00796b;
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    p, ul {
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0 0 10px 0;
+    }
+
+    ul {
+      list-style-type: disc;
+      margin-left: 25px;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      background: #00796b;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #004d40;
+    }
+
+    footer {
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="about-container">
+    <h1>About the Battery Monitoring System</h1>
+
+    <section>
+      <h2>🔋 Project Overview</h2>
+      <p>
+        The Battery Monitoring System for Electric Vehicles is designed to continuously track and display key parameters like battery voltage, charge percentage, and temperature. The system uses an ESP32 microcontroller connected to Firebase for real-time data storage and visualization on a web dashboard.
+      </p>
+    </section>
+
+    <section>
+      <h2>🎯 Objectives</h2>
+      <ul>
+        <li>Monitor vehicle battery health and performance in real time.</li>
+        <li>Ensure early detection of abnormalities to prevent battery failure.</li>
+        <li>Provide remote access to battery data using cloud integration.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>⚙️ Features</h2>
+      <ul>
+        <li>Real-time battery voltage, charge level, and temperature monitoring.</li>
+        <li>Interactive charts and status indicators for quick analysis.</li>
+        <li>Data synchronization via Firebase Realtime Database.</li>
+        <li>Accessible dashboard from any device with internet connectivity.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>💻 Technology Stack</h2>
+      <ul>
+        <li><strong>Microcontroller:</strong> ESP32</li>
+        <li><strong>Database:</strong> Firebase Realtime Database</li>
+        <li><strong>Frontend:</strong> HTML, CSS, JavaScript, Chart.js</li>
+        <li><strong>Hosting:</strong> Firebase Hosting / Local Server</li>
+      </ul>
+    </section>
+
+    <a href="index.html" class="back-btn">← Back to Dashboard</a>
+  </div>
+
+  <footer>
+    © 2025 Battery Monitoring System | Developed for Electric Vehicle Applications
+  </footer>
+</body>
+</html>
