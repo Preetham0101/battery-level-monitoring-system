@@ -1,184 +1,241 @@
-#include <SPI.h>
-#include <SD.h>
 #include <Wire.h>
-#include "RTClib.h"
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <LiquidCrystal_I2C.h>  // LCD library
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+#include <SoftwareSerial.h>
 
-// ================= LCD SETUP =================
-#define LCD_ADDRESS 0x27
-#define LCD_COLUMNS 16
-#define LCD_ROWS    2
-LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
+// --- Pin Definitions ---
+#define DHTPIN 2
+#define DHTTYPE DHT11
+#define VOLTAGE_PIN A0
+#define CURRENT_PIN A1
 
-// ================ DS18B20 Setup ==============
-#define ONE_WIRE_BUS 3
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature ds18b20(&oneWire);
-
-// ================ RTC ========================
-RTC_DS3231 rtc;
-char timestamp[20];
-
-// ================ SD =========================
-const int chipSelect = 10;
-bool sdReady = false;
-
-// ================ Sensors ====================
-const int voltageSensorPin = A0;
-const int currentSensorPin = A1;
-
-// ================ Motor ======================
-const int motorEnablePin = 6;
+// --- Motor Pins ---
+const int motorEnablePin = A2;
 const int motorPin1 = 7;
 const int motorPin2 = 8;
 
-// ================ Calibration ================
-const float refVoltage = 5.0;
-const float voltageScaleFactor = 5.0;
-const float sensitivity = 0.066;
-float zeroCurrentVoltage = 2.5;
+// --- ESP32 Communication Pins ---
+#define ESP_RX 10   // Arduino pin connected to ESP32 TX
+#define ESP_TX 11   // Arduino pin connected to ESP32 RX
 
-unsigned long lastDisplayUpdate = 0;
-unsigned long displayInterval = 1000; // 1 second
+SoftwareSerial espSerial(ESP_RX, ESP_TX);  // RX, TX
 
+// --- Constants ---
+float voltageFactor = 5.0;   // Adjust based on voltage divider
+float sensitivity = 0.066;   // For ACS712-30A (use 0.185 for 5A, 0.100 for 20A)
+
+// --- Objects ---
+DHT dht(DHTPIN, DHTTYPE);
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // Use 0x3F if 0x27 doesn’t work
+
+// --- Timing Variables ---
+unsigned long previousMillis = 0;
+const unsigned long displayInterval = 3000; // Switch display every 3s
+int displayMode = 0; // 0=temp/hum, 1=voltage, 2=current
+
+// =============================================================
+// === SETUP ===
+// =============================================================
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600);       // Bluetooth serial
+  espSerial.begin(9600);    // ESP32 serial
 
-  // LCD
-  Wire.begin(); 
-  lcd.begin(LCD_COLUMNS, LCD_ROWS);
+  // LCD and sensor initialization
+  lcd.init();
   lcd.backlight();
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("System Init...");
+  dht.begin();
 
-  // Motor
+  // Motor setup
   pinMode(motorEnablePin, OUTPUT);
   pinMode(motorPin1, OUTPUT);
   pinMode(motorPin2, OUTPUT);
   motorStop();
   digitalWrite(motorEnablePin, LOW);
 
-  // DS18B20
-  ds18b20.begin();
-
-  // RTC
-  if (!rtc.begin()) {
-    Serial.println("RTC not found!");
-    while (1);
-  }
-  if (rtc.lostPower()) {
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
-
-  // SD
-  if (SD.begin(chipSelect)) {
-    Serial.println("SD card initialized.");
-    sdReady = true;
-    File dataFile = SD.open("log.csv", FILE_WRITE);
-    if (dataFile) {
-      dataFile.println("Date,Time,Voltage(V),Current(A),Temperature(C),Battery(%)");
-      dataFile.close();
-    }
-  } else {
-    Serial.println("SD card init failed!");
-  }
-
-  // Zero current calibration
-  long sum = 0;
-  for (int i = 0; i < 100; i++) {
-    sum += analogRead(currentSensorPin);
-    delay(5);
-  }
-  zeroCurrentVoltage = (sum / 100.0 / 1023.0) * refVoltage;
-
-  delay(1000);
+  lcd.setCursor(0, 0);
+  lcd.print("System Ready");
+  delay(1500);
   lcd.clear();
+
+  Serial.println("Bluetooth Motor + Sensor System Ready.");
+  Serial.println("Commands: f=forward, b=backward, w=stop, q=quit");
+
+  espSerial.println("ESP LINK READY");
 }
 
+// =============================================================
+// === MAIN LOOP ===
+// =============================================================
 void loop() {
-  // Check Bluetooth commands quickly
+  handleBluetooth();       // Immediate motor control
+  updateDisplayCycle();    // Sensor reading cycles
+}
+
+// =============================================================
+// === BLUETOOTH MOTOR CONTROL (Instant Response)
+// =============================================================
+void handleBluetooth() {
   if (Serial.available()) {
-    char cmd = tolower(Serial.read());
-    if (cmd == 'f') motorForward();
-    else if (cmd == 'b') motorBackward();
-    else if (cmd == 'w') motorStop();
-    else if (cmd == 'q') { motorStop(); while (true); }
-  }
+    char command = tolower(Serial.read());
+    Serial.print("Received: ");
+    Serial.println(command);
 
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastDisplayUpdate >= displayInterval) {
-    lastDisplayUpdate = currentMillis;
+    switch (command) {
+      case 'f':
+        digitalWrite(motorEnablePin, HIGH);
+        motorForward();
+        Serial.println("Motor running forward");
+        espSerial.println("MOTOR:FORWARD");
+        break;
 
-    float voltage = analogRead(voltageSensorPin) * refVoltage / 1023.0 * voltageScaleFactor;
-    float sensorVoltage = analogRead(currentSensorPin) * refVoltage / 1023.0;
-    float current = (sensorVoltage - zeroCurrentVoltage) / sensitivity;
+      case 'b':
+        digitalWrite(motorEnablePin, HIGH);
+        motorBackward();
+        Serial.println("Motor running backward");
+        espSerial.println("MOTOR:BACKWARD");
+        break;
 
-    ds18b20.requestTemperatures();
-    float temp = ds18b20.getTempCByIndex(0);
-    if (temp == DEVICE_DISCONNECTED_C) temp = 0.0;
+      case 'w':
+        motorStop();
+        digitalWrite(motorEnablePin, LOW);
+        Serial.println("Motor stopped");
+        espSerial.println("MOTOR:STOP");
+        break;
 
-    int batteryPercent = constrain((voltage / 20.0) * 100, 0, 100);
+      case 'q':
+        motorStop();
+        digitalWrite(motorEnablePin, LOW);
+        Serial.println("Quitting. Motor stopped.");
+        espSerial.println("MOTOR:QUIT");
+        while (true);  // Stop program
+        break;
 
-    DateTime now = rtc.now();
-    sprintf(timestamp, "%02d/%02d/%04d,%02d:%02d:%02d",
-            now.day(), now.month(), now.year(),
-            now.hour(), now.minute(), now.second());
-
-    Serial.print("Time: ");
-    Serial.print(timestamp);
-    Serial.print(" | V: ");
-    Serial.print(voltage, 2);
-    Serial.print(" V | C: ");
-    Serial.print(current, 2);
-    Serial.print(" A | T: ");
-    Serial.print(temp, 1);
-    Serial.print(" °C | BC: ");
-    Serial.print(batteryPercent);
-    Serial.println(" %");
-
-    lcd.setCursor(0, 0);
-    lcd.print("V:"); lcd.print(voltage, 1);
-    lcd.print(" C:"); lcd.print(current, 1);
-
-    lcd.setCursor(0, 1);
-    lcd.print("T:"); lcd.print(temp, 1);
-    lcd.print(" BC:"); lcd.print(batteryPercent);
-    lcd.print("% ");
-
-    if (sdReady) {
-      File dataFile = SD.open("log.csv", FILE_WRITE);
-      if (dataFile) {
-        dataFile.print(timestamp);
-        dataFile.print(",");
-        dataFile.print(voltage, 2);
-        dataFile.print(",");
-        dataFile.print(current, 2);
-        dataFile.print(",");
-        dataFile.print(temp, 1);
-        dataFile.print(",");
-        dataFile.println(batteryPercent);
-        dataFile.close();
-      }
+      default:
+        Serial.println("Invalid command. Use f, b, w, or q.");
+        espSerial.println("INVALID:CMD");
     }
   }
 }
 
-// Motor functions
+// =============================================================
+// === NON-BLOCKING DISPLAY CYCLE (Every 3 Seconds)
+// =============================================================
+void updateDisplayCycle() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= displayInterval) {
+    previousMillis = currentMillis;
+    displayMode = (displayMode + 1) % 3; // Cycle through 0,1,2
+
+    switch (displayMode) {
+      case 0:
+        displayTemperatureHumidity();
+        break;
+      case 1:
+        displayVoltage();
+        break;
+      case 2:
+        displayCurrent();
+        break;
+    }
+  }
+}
+
+// =============================================================
+// === SENSOR DISPLAY FUNCTIONS
+// =============================================================
+void displayTemperatureHumidity() {
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+
+  lcd.clear();
+  if (isnan(humidity) || isnan(temperature)) {
+    lcd.setCursor(0, 0);
+    lcd.print("DHT Error!");
+    espSerial.println("DHT_ERROR");
+    return;
+  }
+
+  lcd.setCursor(0, 0);
+  lcd.print("Temp:");
+  lcd.print(temperature, 1);
+  lcd.print((char)223);
+  lcd.print("C");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Hum:");
+  lcd.print(humidity, 1);
+  lcd.print("%");
+
+  // --- Send to ESP32 ---
+  espSerial.print("TEMP:");
+  espSerial.print(temperature, 1);
+  espSerial.print(",HUM:");
+  espSerial.println(humidity, 1);
+}
+
+void displayVoltage() {
+  int sensorValue = analogRead(VOLTAGE_PIN);
+  float voltage = (sensorValue * 5.0 / 1023.0) * voltageFactor;
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Voltage:");
+  lcd.setCursor(9, 0);
+  lcd.print(voltage, 2);
+  lcd.print("V");
+
+  // --- Send to ESP32 ---
+  espSerial.print("VOLT:");
+  espSerial.println(voltage, 2);
+}
+
+void displayCurrent() {
+  float current = readCurrent();
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Current:");
+  lcd.setCursor(9, 0);
+  lcd.print(current, 2);
+  lcd.print("A");
+
+  // --- Send to ESP32 ---
+  espSerial.print("CURR:");
+  espSerial.println(current, 2);
+}
+
+// =============================================================
+// === READ CURRENT FROM ACS712 (RMS Method)
+// =============================================================
+float readCurrent() {
+  int sampleCount = 100;
+  float sum = 0;
+
+  for (int i = 0; i < sampleCount; i++) {
+    int sensorValue = analogRead(CURRENT_PIN);
+    float voltage = (sensorValue * 5.0) / 1023.0;
+    float currentSample = (voltage - 2.5) / sensitivity; // 2.5V = 0A offset
+    sum += sq(currentSample);
+  }
+
+  return sqrt(sum / sampleCount);
+}
+
+// =============================================================
+// === MOTOR CONTROL FUNCTIONS
+// =============================================================
 void motorForward() {
-  digitalWrite(motorEnablePin, HIGH);
   digitalWrite(motorPin1, HIGH);
   digitalWrite(motorPin2, LOW);
 }
+
 void motorBackward() {
-  digitalWrite(motorEnablePin, HIGH);
   digitalWrite(motorPin1, LOW);
   digitalWrite(motorPin2, HIGH);
 }
+
 void motorStop() {
-  digitalWrite(motorEnablePin, LOW);
   digitalWrite(motorPin1, LOW);
   digitalWrite(motorPin2, LOW);
 }
