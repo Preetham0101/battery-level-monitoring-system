@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reset Password | Battery Monitoring System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <form id="resetForm" class="form active">
+      <h2>Reset Password</h2>
+      <input type="email" id="resetEmail" placeholder="Enter your email" required />
+      <button type="submit">Send Reset Link</button>
+    </form>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script>
+    const firebaseConfig = {
+       apiKey: "AIzaSyBCwhjguHWNJM0L0GwRfoOS3lwrT53YU3Q",
+       authDomain: "battery-monitoring-syste-46d3c.firebaseapp.com",
+       projectId: "battery-monitoring-syste-46d3c",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById("resetForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("resetEmail").value;
+
+      auth.sendPasswordResetEmail(email)
+        .then(() => alert("Password reset email sent! Check your inbox."))
+        .catch((err) => alert("Error: " + err.message));
+    });
+  </script>
+</body>
+</html>

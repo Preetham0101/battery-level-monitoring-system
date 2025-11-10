@@ -1,0 +1,673 @@
+/* ---- General ---- */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+h1 {
+  margin: 20px 0;
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+  width: 100%;
+  max-width: 1200px;
+  padding: 20px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.circular-battery {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: conic-gradient(#4caf50 var(--level, 50%), #444 var(--level, 50%));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0 auto 15px auto;
+  transition: background 0.5s;
+  box-shadow: 0 0 20px rgba(0, 255, 100, 0.6);
+}
+
+.status {
+  font-size: 16px;
+  margin-top: 8px;
+  color: #ddd;
+}
+
+canvas {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 10px;
+  width: 100%;
+}
+
+/* ---- Buttons ---- */
+.about-btn {
+  position: fixed;
+  top: 20px;
+  right: 25px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 22px;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.about-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.logout-btn {
+  position: fixed;
+  top: 20px;
+  left: 25px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  border-radius: 8px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: 0.3s;
+  backdrop-filter: blur(5px);
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ---- Zoom Modal ---- */
+.chart-modal {
+  display: none;
+  position: fixed;
+  z-index: 3000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.chart-modal[aria-hidden="false"] {
+  display: flex;
+}
+
+.chart-modal-content {
+  background: #1c1c1c;
+  border-radius: 15px;
+  padding: 15px 20px;
+  width: 90%;
+  max-width: 700px;      /* smaller width */
+  max-height: 500px;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+  cursor: move;
+  position: absolute;
+  overflow: hidden;
+  animation: fadeInScale 0.3s ease;
+}
+
+.chart-modal-content canvas {
+  width: 100% !important;
+  height: 360px !important; /* smaller chart */
+  background: transparent;
+  border-radius: 10px;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.zoom-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.header-buttons button,
+.header-buttons a {
+  background: #00796b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+
+.header-buttons button:hover,
+.header-buttons a:hover {
+  background: #004d40;
+}
+
+.close-btn {
+  font-size: 22px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close-btn:hover {
+  color: #ff4444;
+}
+
+.clickable-chart {
+  cursor: zoom-in;
+}
+/* ---- AUTH PAGE (Login / Signup) ---- */
+.auth-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 400px;
+  color: #000;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  margin-top: 10vh;
+}
+
+.toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+  gap: 10px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  background-color: #eee;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.toggle button.active {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.form {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+}
+
+.form.active {
+  display: flex;
+}
+
+.form h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button[type="submit"] {
+  padding: 12px;
+  background-color: #4caf50;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button[type="submit"]:hover {
+  background-color: #45a049;
+}
+
+#forgotPassword {
+  text-align: right;
+  font-size: 14px;
+  color: #007bff;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+#forgotPassword:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 30px 20px;
+    width: 90%;
+  }
+}
+/* ---- AUTH PAGE (Login / Signup) ---- */
+.auth-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 400px;
+  color: #000;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  margin-top: 10vh;
+}
+
+.toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+  gap: 10px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  background-color: #eee;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.toggle button.active {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.form {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+}
+
+.form.active {
+  display: flex;
+}
+
+.form h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button[type="submit"] {
+  padding: 12px;
+  background-color: #4caf50;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button[type="submit"]:hover {
+  background-color: #45a049;
+}
+
+#forgotPassword {
+  text-align: right;
+  font-size: 14px;
+  color: #007bff;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+#forgotPassword:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 30px 20px;
+    width: 90%;
+  }
+}
+/* ---- AUTH PAGE STYLING ---- */
+
+/* Fullscreen Background */
+.auth-bg {
+  background: url("bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* White Glass Card */
+.auth-box {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 40px 35px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+/* Toggle Buttons */
+.toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 6px;
+  background: #e0e0e0;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.toggle button.active {
+  background: #4caf50;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Forms */
+.form {
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form.active {
+  display: flex;
+}
+
+.form h2 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #333;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  border-color: #4caf50;
+  outline: none;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.4);
+}
+
+/* Buttons */
+button[type="submit"] {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button[type="submit"]:hover {
+  background: #388e3c;
+}
+
+/* Forgot Password */
+#forgotPassword {
+  text-align: right;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+#forgotPassword:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .auth-box {
+    width: 90%;
+    padding: 25px;
+  }
+}
+/* ---- AUTH PAGE STYLING WITH ANIMATION ---- */
+
+/* Fullscreen Background */
+.auth-bg {
+  background: url("bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+/* White Glass Card with Fade-In Animation */
+.auth-box {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  padding: 40px 35px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+/* Animation Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toggle Buttons */
+.toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 6px;
+  background: #e0e0e0;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.toggle button.active {
+  background: #4caf50;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Forms */
+.form {
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form.active {
+  display: flex;
+}
+
+.form h2 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #333;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  border-color: #4caf50;
+  outline: none;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.4);
+}
+
+/* Buttons */
+button[type="submit"] {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+button[type="submit"]:hover {
+  background: #388e3c;
+  transform: scale(1.02);
+}
+
+/* Forgot Password */
+#forgotPassword {
+  text-align: right;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+#forgotPassword:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .auth-box {
+    width: 90%;
+    padding: 25px;
+  }
+}
