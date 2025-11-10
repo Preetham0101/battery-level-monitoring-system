@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Battery Monitoring System</title>
+  <title>Battery Monitoring Dashboard</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Chart.js Zoom Plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
+  <button id="logoutBtn" class="logout-btn">Logout</button>
   <h1>🔋 Battery Monitoring Dashboard</h1>
 
   <div class="dashboard">
@@ -42,21 +37,25 @@
 
   <a href="about.html" class="about-btn" title="About the project">ℹ</a>
 
-  <!-- Chart Zoom Modal -->
+  <!-- Chart Modal -->
   <div id="chartModal" class="chart-modal" aria-hidden="true">
-    <div class="chart-modal-content" id="draggableModal" role="dialog" aria-modal="true">
+    <div class="chart-modal-content" id="draggableModal">
       <div class="modal-header">
         <h3 id="zoomTitle" class="zoom-title"></h3>
         <div class="header-buttons">
           <button id="resetZoomBtn" class="reset-btn">Reset Zoom</button>
           <a id="downloadChart" class="download-btn" href="#" download="chart.png">Download</a>
-          <button id="closeModal" class="close-btn" aria-label="Close">&times;</button>
+          <button id="closeModal" class="close-btn">&times;</button>
         </div>
       </div>
       <canvas id="zoomedChart"></canvas>
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
